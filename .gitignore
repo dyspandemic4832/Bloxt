@@ -163,4 +163,3 @@ cython_debug/
 dev_config.json
 
 # Temporary disabled folder
-cogs/
