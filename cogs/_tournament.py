@@ -1,5 +1,6 @@
 import interactions
 from addons.jsonimport import JsonImport
+import random
 
 JI = JsonImport("dev_config.json")
 
@@ -11,10 +12,25 @@ listOfTournament = []
 def guild_id():
     return JI.get_value_from_key("GUILD_ID")
 
-def addTournament(Tournamentname, Opponents):
-    ID = len(listOfTournament) + 1
-    listOfTournament.append((ID ,Tournamentname, Opponents))
-    return ID
+def generate_password(passwd_length):
+    password = ""
+    for i in range(passwd_length):
+        password += chr(random.randint(33, 126))
+    return password
+
+def addTournament(
+    tournament_name: str = None,
+    max_player: int = None,
+    private_match: bool = None,
+    password: str = None,
+    opponents: list = None
+):
+    global listOfTournament
+    if password == None and private_match == True:
+        password = generate_password(4)
+    listOfTournament.append([tournament_name, max_player, private_match, password, opponents])
+    if private_match == True:
+        return password
 
 def listTournament():
     return listOfTournament
@@ -41,9 +57,9 @@ class Tournament(interactions.Extension):
         self,
         ctx: interactions.SlashContext
     ):
-        await ctx.send("Hello, world!")
+        await ctx.send("Hier wird noch ein Embed eingefügt werden.")
         
-    ### /tournament create [(str)tournament_name] [(str)gegner] ###
+    ### /tournament create [(str)tournament_name] [(int)max_player] [(bool)private_match] [{optional}(str)password]###
     @tournament.subcommand(
         "erstellen", sub_cmd_description="Erstelle ein Turnier"
     )
@@ -54,21 +70,63 @@ class Tournament(interactions.Extension):
         required=True,
     )
     @interactions.slash_option(
-        "gegner",
-        "Geben den Name des Gegners ein",
-        opt_type=interactions.OptionType.STRING,
+        "max_player",
+        "Gebe hier die maximale Anzahl an Spielern ein.",
+        opt_type=interactions.OptionType.INTEGER,
         required=True,
+    )
+    @interactions.slash_option(
+        "private_match",
+        "Soll das Spiel privat sein?",
+        opt_type=interactions.OptionType.BOOLEAN,
+        required=False,
+    )
+    @interactions.slash_option(
+        "password",
+        "Hier kannst du ein Passwort für das Turnier festlegen.",
+        opt_type=interactions.OptionType.STRING,
+        required=False,
     )
     async def erstellen(
         self,
         ctx: interactions.SlashContext,
         tournament_name: str = None,
-        gegner: str = None,
+        max_player: int = None,
+        private_match: bool = None,
+        password: str = None,
     ):
-        tournamentID = addTournament(tournament_name, Opponents=(ctx.author, gegner))
-        await ctx.send("You have created the Tournament: " + str(tournament_name) + "\nID: " + str(tournamentID))
+        passwd = addTournament(
+            tournament_name,
+            max_player,
+            private_match,
+            password,
+            [ctx.author.id]
+        )
+        private_match_message = ""
+        if private_match == True:
+            private_match_message = "private "
+        message = "Du hast das " + private_match_message + "Tournament: " + str(tournament_name) + " erstellt. \n"
+        await ctx.send(message)
+        if private_match == True and passwd != None:
+            await ctx.bot.get_member(ctx.author.id, ctx.guild_id).send("Dein Passwort für das Turnier lautet: " + str(passwd))
     
     ### /tournament list ###
+    @tournament.subcommand(
+        "liste", sub_cmd_description="eine Liste aller Turniere"
+    )
+    async def liste(
+        self,
+        ctx: interactions.SlashContext,
+    ):
+        message = "Liste aller Turniere: \n"
+        for i in listOfTournament:
+            tournament = ""
+            if i[2] == True:
+                tournament += "[PRIVATE] "
+            tournament += str(i[0]) + " | max Spieler: " + str(i[1]) + " | Angemeldete Spieler:  " + str(len(i[4]))
+            message += tournament + "\n"
+        await ctx.send(message)
+    
     
     ### /tournament delete [(int)tournament_id] ###
     
