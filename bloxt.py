@@ -11,7 +11,12 @@ JI = JsonImport("dev_config.json")
 bot = Client(
     intents=Intents.DEFAULT | Intents.MESSAGE_CONTENT,
     sync_interactions=True,
-    asyncio_debug=True
+    asyncio_debug=True,
+    activity=interactions.Activity(
+        name="DEBUGGING",
+        type=interactions.ActivityType.STREAMING,
+        url="https://www.twitch.tv/dyspandemic4832",
+    ),
 )
 prefixed_commands.setup(bot)
 
