@@ -174,6 +174,7 @@ class Avertax(interactions.Extension):
             embed.color=interactions.BrandColors.RED
         
         print(ctx.author)
+        print(ctx.author_id)
         
         await ctx.send(embed=embed)
         

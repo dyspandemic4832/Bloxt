@@ -8,6 +8,6 @@ class PingCog(interactions.Extension):
         "ping", description="Simple Ping Commands", scopes=[JI.get_value_from_key("GUILD_ID")]
     )
     async def test_cmd(self, ctx: interactions.SlashContext):
-        await ctx.send("Pong!")
+        await ctx.send(str(ctx.bot.latency))
         
     
